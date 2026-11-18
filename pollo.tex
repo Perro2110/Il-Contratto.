@@ -1,0 +1,300 @@
+% ==========================================================================
+%  PERGAMENA — template LaTeX per atti solenni in stile pergamena antica
+%  Compilare con:  pdflatex pergamena.tex   (oppure latexmk -pdf)
+%  Funziona anche su Overleaf (compilatore pdfLaTeX).
+% ==========================================================================
+\documentclass[11pt,a4paper]{article}
+
+% --- Lingua e codifica -----------------------------------------------------
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[italian]{babel}
+
+% --- Caratteri -------------------------------------------------------------
+\usepackage[oldstyle,proportional]{ebgaramond} % corpo del testo
+\usepackage{cinzel}                            % titoli lapidari: \cinzel, \cinzel\itshape = Decorative
+\usepackage{microtype}
+
+% --- Impaginazione ---------------------------------------------------------
+\usepackage[a4paper,top=3.6cm,bottom=3.8cm,left=3.4cm,right=3.4cm]{geometry}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{decorations.pathmorphing,calc,shadings}
+\usepackage{pgfornament}
+\usepackage{eso-pic}
+\usepackage{lettrine}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{setspace}
+\usepackage{needspace}
+
+% ==========================================================================
+%  PALETTE
+% ==========================================================================
+\definecolor{pergChiara}{HTML}{F4E4BC}   % centro del foglio
+\definecolor{pergMedia}{HTML}{E2C88E}    % tono intermedio
+\definecolor{pergScura}{HTML}{B98B4E}    % bordi ingialliti
+\definecolor{bruciato}{HTML}{3A2414}     % fondo dietro al foglio
+\definecolor{macchia}{HTML}{8A5A2B}      % macchie d'umidità
+\definecolor{inchiostro}{HTML}{3B2412}   % testo
+\definecolor{inchiostroTenue}{HTML}{8C6A48}
+\definecolor{rubrica}{HTML}{8E1B12}      % rosso dei capilettera (rubricatura)
+\definecolor{ceralacca}{HTML}{9B1B1B}
+\definecolor{ceralaccaScura}{HTML}{5E0D0D}
+
+\color{inchiostro}
+
+% ==========================================================================
+%  SFONDO A PERGAMENA (disegnato su ogni pagina)
+% ==========================================================================
+\newcommand{\sfondopergamena}{%
+\begin{tikzpicture}[remember picture,overlay]
+  % semi diversi per ogni pagina, ma riproducibili
+  \pgfmathsetseed{\number\numexpr 1789+97*\value{page}\relax}
+  % 1) fondo scuro "bruciato" dietro al foglio
+  \fill[bruciato] (current page.south west) rectangle (current page.north east);
+  % 2) il foglio, con bordo irregolare e sfumatura radiale
+  \def\bordo{([shift={(5mm,5mm)}]current page.south west) rectangle
+             ([shift={(-5mm,-5mm)}]current page.north east)}
+  \shade[inner color=pergChiara, outer color=pergScura,
+         decorate, decoration={random steps,segment length=2.5mm,amplitude=1.1mm}]
+         \bordo;
+  % 3) vignettatura: margini più scuri e consumati
+  \begin{scope}
+    \clip[decorate, decoration={random steps,segment length=2.5mm,amplitude=1.1mm}] \bordo;
+    \foreach \w/\o in {28mm/0.06, 18mm/0.07, 10mm/0.09, 5mm/0.12, 2mm/0.25}{
+      \draw[macchia, line width=\w, opacity=\o,
+            decorate, decoration={random steps,segment length=6mm,amplitude=2mm}] \bordo;
+    }
+    % 4) macchie d'umidità e d'età
+    \foreach \i in {1,...,22}{
+      \pgfmathsetmacro{\x}{rnd*\paperwidth}
+      \pgfmathsetmacro{\y}{rnd*\paperheight}
+      \pgfmathsetmacro{\r}{4+rnd*28}
+      \pgfmathsetmacro{\op}{0.03+rnd*0.07}
+      \fill[macchia, opacity=\op,
+            decorate, decoration={random steps,segment length=2mm,amplitude=1.5mm}]
+        ([shift={(\x pt,\y pt)}]current page.south west) circle (\r mm);
+    }
+    % 5) grana / fibre della pelle
+    \foreach \i in {1,...,450}{
+      \pgfmathsetmacro{\x}{rnd*\paperwidth}
+      \pgfmathsetmacro{\y}{rnd*\paperheight}
+      \pgfmathsetmacro{\a}{rnd*360}
+      \pgfmathsetmacro{\l}{0.3+rnd*1.6}
+      \draw[macchia, opacity=0.18, line width=0.15pt]
+        ([shift={(\x pt,\y pt)}]current page.south west) -- ++(\a:\l mm);
+    }
+  \end{scope}
+  % 6) cornice a doppio filetto con ornamenti agli angoli
+  \def\m{1.7cm}
+  \draw[inchiostro!80, line width=1.1pt]
+    ([shift={(\m,\m)}]current page.south west) rectangle ([shift={(-\m,-\m)}]current page.north east);
+  \draw[inchiostro!70, line width=0.4pt]
+    ([shift={(\m+1.6mm,\m+1.6mm)}]current page.south west) rectangle ([shift={(-\m-1.6mm,-\m-1.6mm)}]current page.north east);
+  \node[anchor=north west,inner sep=0] at ([shift={(\m+0.6mm,-\m-0.6mm)}]current page.north west)
+    {\pgfornament[width=2.2cm,color=inchiostro]{61}};
+  \node[anchor=north east,inner sep=0] at ([shift={(-\m-0.6mm,-\m-0.6mm)}]current page.north east)
+    {\pgfornament[width=2.2cm,color=inchiostro,symmetry=v]{61}};
+  \node[anchor=south west,inner sep=0] at ([shift={(\m+0.6mm,\m+0.6mm)}]current page.south west)
+    {\pgfornament[width=2.2cm,color=inchiostro,symmetry=h]{61}};
+  \node[anchor=south east,inner sep=0] at ([shift={(-\m-0.6mm,\m+0.6mm)}]current page.south east)
+    {\pgfornament[width=2.2cm,color=inchiostro,symmetry=c]{61}};
+\end{tikzpicture}}
+
+\AddToShipoutPictureBG{\sfondopergamena}
+
+% ==========================================================================
+%  INTESTAZIONI E PIÈ DI PAGINA
+% ==========================================================================
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+\fancyfoot[C]{\small\textsc{— foglio \thepage{} —}}
+\fancypagestyle{plain}{\fancyhf{}\fancyfoot[C]{\small\textsc{— foglio \thepage{} —}}}
+
+% ==========================================================================
+%  COMANDI DI COMODO
+% ==========================================================================
+\setstretch{1.12}
+\setlength{\parindent}{1.5em}
+\setlength{\parskip}{0.35em}
+
+% Campo da compilare: [ testo ] in inchiostro sbiadito
+\newcommand{\campo}[1]{\textcolor{inchiostroTenue}{[\,\textit{#1}\,]}}
+
+% Separatore ornamentale
+\newcommand{\fregio}[1][88]{%
+  \par\medskip
+  {\centering\pgfornament[width=4.5cm,color=inchiostro]{#1}\par}
+  \medskip}
+
+% Capolettera rubricato (rosso)
+\renewcommand{\LettrineFontHook}{\initials\color{rubrica}}
+\renewcommand{\LettrineTextFont}{\scshape}
+\setcounter{DefaultLines}{3}
+\newcommand{\capolettera}[2]{\lettrine[lines=3,findent=0.25em,nindent=0pt]{#1}{#2}}
+
+% Titolo solenne
+\newcommand{\titoloatto}[2]{%
+  \thispagestyle{plain}
+  \begin{center}
+    {\cinzel\itshape\fontsize{30}{36}\selectfont #1\par}
+    \vspace{0.6em}
+    {\pgfornament[width=7cm,color=inchiostro]{84}\par}
+    \vspace{0.4em}
+    {\cinzel\large\textls[150]{#2}\par}
+  \end{center}
+  \vspace{1em}}
+
+% Rubrica di sezione (es. "Premesso che")
+\newcommand{\rubrica}[1]{%
+  \par\Needspace{4\baselineskip}\bigskip
+  {\centering\cinzel\color{rubrica}\large #1\par}
+  \smallskip}
+
+% Articoli numerati in romano
+\newcounter{articolo}
+\newcommand{\articolo}[1]{%
+  \stepcounter{articolo}%
+  \par\Needspace{7\baselineskip}\bigskip
+  {\centering
+    {\cinzel\color{rubrica}Articolo \Roman{articolo}\par}
+    \vspace{0.15em}
+    {\scshape\large #1\par}
+    \vspace{0.1em}
+    {\pgfornament[width=1.6cm,color=inchiostro!80]{89}\par}}
+  \smallskip\noindent\ignorespaces}
+
+% Commi numerati
+\newlist{commi}{enumerate}{1}
+\setlist[commi]{label=\arabic*.,leftmargin=2em,itemsep=0.25em,topsep=0.3em}
+
+% Elenco delle premesse
+\newlist{premesse}{enumerate}{1}
+\setlist[premesse]{label=\textit{\alph*)},leftmargin=2em,itemsep=0.25em,topsep=0.3em}
+
+% Sigillo di ceralacca: \sigillo{iniziali}
+\newcommand{\sigillo}[1]{%
+\begin{tikzpicture}[baseline=(c.center)]
+  \pgfmathsetseed{4242}
+  % nastro
+  \fill[rubrica!85!black] (-0.35,-0.3) -- (-0.85,-2.0) -- (-0.55,-1.8) -- (-0.4,-2.1) -- (0.05,-0.4) -- cycle;
+  \fill[rubrica!70!black] (0.35,-0.3) -- (0.9,-1.95) -- (0.6,-1.8) -- (0.42,-2.05) -- (-0.05,-0.4) -- cycle;
+  % colatura di cera
+  \shade[inner color=ceralacca, outer color=ceralaccaScura,
+         decorate, decoration={random steps,segment length=1.6mm,amplitude=0.9mm}]
+    (0,0) circle (1.25);
+  % impronta del timbro
+  \draw[ceralaccaScura, line width=1.2pt] (0,0) circle (0.92);
+  \draw[ceralaccaScura!80, line width=0.4pt] (0,0) circle (0.82);
+  \fill[ceralacca!85!white, opacity=0.25] (-0.35,0.45) ellipse (0.35 and 0.18);
+  \node (c) at (0,0) {\cinzel\itshape\color{ceralacca!55!pergChiara}\Large #1};
+\end{tikzpicture}}
+
+% Firma: \firma{qualifica}{nome}
+\newcommand{\firma}[2]{%
+  \begin{minipage}[t]{0.4\textwidth}\centering
+    \textsc{#1}\par\vspace{1.6cm}
+    \rule{\linewidth}{0.4pt}\par
+    \small\textit{#2}
+  \end{minipage}}
+
+% ==========================================================================
+%  DOCUMENTO
+% ==========================================================================
+\begin{document}
+
+\titoloatto{Atto Solenne}{di \campo{oggetto dell'atto}}
+
+\capolettera{L}{'anno duemilaventisei}, il giorno \campo{diciotto} del mese di
+\campo{novembre}, in \campo{luogo}, presso \campo{indirizzo}, innanzi a \campo{nome del testimone
+o del pubblico ufficiale} e alla presenza dei testimoni idonei, noti e richiesti,
+sono personalmente comparsi e si sono costituiti i signori:
+
+\begin{premesse}
+  \item \campo{Nome e Cognome}, nato a \campo{luogo} il \campo{data}, residente in
+        \campo{indirizzo}, codice fiscale \campo{codice}, di seguito per brevità
+        denominato \guillemotleft\textsc{la Parte Prima}\guillemotright;
+  \item \campo{Nome e Cognome}, nato a \campo{luogo} il \campo{data}, residente in
+        \campo{indirizzo}, codice fiscale \campo{codice}, di seguito per brevità
+        denominato \guillemotleft\textsc{la Parte Seconda}\guillemotright;
+\end{premesse}
+
+\noindent di seguito congiuntamente denominati \guillemotleft le Parti\guillemotright\
+e singolarmente \guillemotleft la Parte\guillemotright.
+
+\rubrica{Premesso che}
+
+\begin{premesse}
+  \item la Parte Prima è titolare di \campo{diritto, bene o facoltà}, libero da
+        pesi, vincoli, oneri e trascrizioni pregiudizievoli di qualsivoglia natura;
+  \item la Parte Seconda ha manifestato il proprio interesse a \campo{finalità},
+        alle condizioni e nei termini di cui al presente atto;
+  \item è intendimento delle Parti regolare per iscritto i reciproci diritti e
+        obblighi, a ogni effetto di legge e di ragione.
+\end{premesse}
+
+\rubrica{Tutto ciò premesso}
+
+\noindent che forma parte integrante e sostanziale del presente atto, le Parti,
+come sopra costituite, convengono e stipulano quanto segue.
+
+\fregio
+
+\articolo{Delle premesse}
+Le premesse e gli eventuali allegati costituiscono parte integrante e sostanziale
+del presente atto e ne informano l'interpretazione.
+
+\articolo{Dell'oggetto}
+\begin{commi}
+  \item Con il presente atto la Parte Prima \campo{cede / concede / si obbliga a}
+        in favore della Parte Seconda, che accetta, \campo{descrizione dell'oggetto}.
+  \item Quanto sopra si intende nello stato di fatto e di diritto in cui attualmente
+        si trova, con ogni accessione, pertinenza e servitù attiva e passiva.
+\end{commi}
+
+\articolo{Degli obblighi delle Parti}
+\begin{commi}
+  \item La Parte Prima si obbliga a \campo{obblighi}, con la diligenza del buon padre
+        di famiglia.
+  \item La Parte Seconda si obbliga a corrispondere la somma di \campo{importo}
+        (\campo{importo in lettere}), entro e non oltre il \campo{termine}.
+\end{commi}
+
+\articolo{Della durata e del recesso}
+Il presente atto ha efficacia dalla data della sua sottoscrizione e sino al
+\campo{data}. È facoltà di ciascuna Parte recedere con preavviso scritto di
+\campo{giorni} giorni, da comunicarsi a mezzo raccomandata con avviso di
+ricevimento ovvero posta elettronica certificata.
+
+\articolo{Della clausola penale}
+In caso di inadempimento, anche parziale, la Parte inadempiente sarà tenuta a
+corrispondere all'altra, a titolo di penale, la somma di \campo{importo}, salvo
+il risarcimento del maggior danno ai sensi dell'art.~1382 del Codice civile.
+
+\articolo{Del foro competente}
+Per ogni controversia che dovesse insorgere in ordine all'interpretazione,
+esecuzione o risoluzione del presente atto, le Parti eleggono quale foro
+esclusivamente competente quello di \campo{città}.
+
+\articolo{Delle disposizioni finali}
+\begin{commi}
+  \item Ogni modifica al presente atto dovrà risultare da atto scritto, a pena
+        di nullità.
+  \item Per quanto non espressamente previsto si rinvia alle norme del Codice
+        civile e delle leggi speciali in materia.
+\end{commi}
+
+\fregio[85]
+
+\noindent\textit{Fatto, letto, confermato e sottoscritto in \campo{luogo},
+addì \campo{data}, in due originali, uno per ciascuna Parte.}
+
+\vspace{1.2cm}
+\noindent
+\firma{La Parte Prima}{\campo{Nome e Cognome}}\hfill
+\raisebox{-1.3cm}{\sigillo{AS}}\hfill
+\firma{La Parte Seconda}{\campo{Nome e Cognome}}
+
+\end{document}
